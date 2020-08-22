@@ -3,12 +3,13 @@ import axios from "axios";
 import { apiBaseUrl } from "../constants";
 import {useParams} from 'react-router-dom';
 import { useStateValue, updatePatient } from "../state";
-import { Patient } from "../types";
+import { Patient, Diagnosis } from "../types";
 import { Icon } from 'semantic-ui-react';
 
 const PatientPage: React.FC = () => {
     const [{ patients }, dispatch] = useStateValue();
     const [patient, setPatient] = useState<Patient>();
+    const [diagnosis, setDiagnosis] = useState<Diagnosis[]>();
     const { id } = useParams<{ id: string }>();
 
     React.useEffect(() => {
@@ -20,6 +21,11 @@ const PatientPage: React.FC = () => {
                   `${apiBaseUrl}/patients/${id}`
                 );
                 //console.log("Inside Patient Page", patientFromApi);
+
+                const {data: diagnosisData} = await axios.get<Diagnosis[]>(
+                  `${apiBaseUrl}/diagnosis`
+                );
+                setDiagnosis(diagnosisData);
                 setPatient(patientFromApi);
                 dispatch(updatePatient(patientFromApi));
               } catch (e) {
@@ -51,7 +57,12 @@ const PatientPage: React.FC = () => {
               <div key={entry.id}>
                 <p>{entry.date} <span style={{fontStyle: 'italic'}}>{entry.description}</span></p>
                 <ul>
-                  {entry.diagnosisCodes?.map(code => <li key={code}>{code}</li>)}
+                  {entry.diagnosisCodes?.map(code => 
+                    <li key={code}>
+                      {code} {" "}
+                      {diagnosis?.map(d => d.code === code ? <span>{d.name}</span> : null)}
+                    </li>
+                  )}
                 </ul>
               </div>
             )}
